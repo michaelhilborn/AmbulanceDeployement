@@ -74,9 +74,9 @@ function Gamma(p::DeploymentProblem; α=paramss.α)
 # /90 represents the number of calls in a 3 month period
     #γ_local = [quantile(Poisson((sum(demand[:,vec(p.adjacency[i,:])], 2))/90),1-α) for i=1:p.nregions]
     # γ_local = [quantile(Poisson(mean(sum(demand[:,vec(p.adjacency[i,:])]))),1-α) for i=1:p.nregions]
-    γ_local = [quantile(Poisson(mean(sum(demand[:,vec(p.adjacency[i,:])]))/90),1-α) for i=1:p.nregions]
-    γ_regional = [quantile(Poisson(mean(sum(demand[:,p.coverage[:,i]]))/90),1-α) for i in 1:p.nlocations]
-    γ_global = quantile(Poisson(mean(sum(demand))/90),1-α)
+    γ_local = [quantile(Poisson(mean(sum(demand[:,vec(p.adjacency[i,:])]))),1-α) for i=1:p.nregions]
+    γ_regional = [quantile(Poisson(mean(sum(demand[:,p.coverage[:,i]]))),1-α) for i in 1:p.nlocations]
+    γ_global = quantile(Poisson(mean(sum(demand))),1-α)
     Gamma(γ_single,γ_local,γ_regional,γ_global)
 end
 
@@ -118,13 +118,13 @@ function evaluate(Q::Qrobust, x::Vector{T}) where {T <: Real}
     JuMP.@objective(Q.m, Max, sum(Q.d[j] for j in Q.J) - sum(x[i]*Q.q[i] for i in Q.I))
     #status = JuMP.solve(Q.m)
     status = JuMP.optimize!(Q.m)
-    JuMP.objective_value(Q.m), Int[round(Int,JuMP.value(d)) for d in Q.d]
+    JuMP.objective_value(Q.m), Int[round(Int,JuMP.value.(d)) for d in Q.d]
 
 end
 
 function evaluate_objvalue(Q::Qrobust, x::Vector{T}) where {T <: Real}
     JuMP.@objective(Q.m, Max, sum(Q.d[j] for j in Q.J) - sum(x[i]*Q.q[i] for i in Q.I))
-    status = JuMP.solve(Q.m)
+    JuMP.optimize!(Q.m)
     JuMP.objective_value(Q.m)
 end
 
