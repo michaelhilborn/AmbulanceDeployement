@@ -46,7 +46,7 @@
             * Import Pkg
             * Pkg.add(“Gurobi”) or Pkg.add(name=”Gurobi”, version=”0.8.1”)
             * Pkg.build(“Gurobi”)
-            * Using Gurobi
+            * using Gurobi
             * Gurobi
                 * This should print “Gurobi” back to the terminal if correct. Otherwise, it will say it is undefined
             * Gurobi.Model
@@ -67,6 +67,19 @@
 * It'd be nice if we can get it set up so that the package we created is the same thing as the repo, that way we don't have to copy/paste files between the repo and local packages.  Less room for error.  If you have ideas, have at it.  An added benefit is that future users could add our package by cloning the GitHub link. [This][4] might be a good staring point.
 
 -Will
+
+## How to run after installation
+1. In the Julia terminal, navigate to the AmbulanceDeployment.jl-legacy folder
+2. Import Pkg
+3. Hit "]" to go into Pkg mode. Here, type "activate ."
+4. Go back to Julia mode by pressing backspace
+5. Pkg.instantiate()
+6. Pkg.add(name="Gurobi", version="0.8.1")
+7. Pkg.build("Gurobi")
+8. using Gurobi
+9. cd into src
+10. Run a file with include("file_name"). For example, include("Ambulance_Deployment_experiments.jl")
+
 
 [1]: https://docs.julialang.org/en/v1/stdlib/REPL/
 [2]: https://julialang.github.io/Pkg.jl/v1/creating-packages/
