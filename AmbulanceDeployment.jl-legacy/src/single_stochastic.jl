@@ -7,12 +7,11 @@ using DataFrames, Winston, JLD, CSV, Gurobi, JuMP
 using JLD, JSON
 
 
-hourly_calls = CSV.File("../test/austin-data/Full_WeekdayCalls.csv") |> DataFrame
-adjacent_nbhd = CSV.File("../test/austin-data/adjacent_nbhd.csv") |> DataFrame
-coverage = CSV.read("../test/austin-data/coverage_real.csv", DataFrame, header=false)
+hourly_calls = CSV.File("..\\test\\Austin_Data\\Full_WeekdayCalls.csv") |> DataFrame
+adjacent_nbhd = CSV.File("..\\test\\Austin_Data\\adjacent_nbhd.csv") |> DataFrame
+coverage = CSV.read("..\\test\\Austin_Data\\coverage_real.csv", DataFrame, header=false)
+incidents = CSV.File("..\\test\\Austin_Data\\austin_incidents.csv") |> DataFrame
 coverage = convert(Array{Bool, 2}, coverage[:, :])
-incidents = CSV.File("../test/austin-data/austin_incidents.csv") |> DataFrame
-
 
 regions = Int[parse(Int,string(x)) for x in names(hourly_calls[:,6:ncol(hourly_calls)])]
 locations = collect(1:size(coverage,2))

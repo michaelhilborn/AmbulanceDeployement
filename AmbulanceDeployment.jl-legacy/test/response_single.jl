@@ -11,7 +11,7 @@ include("..//src//simulate.jl")
 include("..//src//evaluate.jl")
 
 turnaround = Distributions.LogNormal(3.65, 0.3)
-ncalls = 3000
+ncalls = 100
 namb = 45
 lambda = 0
 
@@ -25,7 +25,7 @@ hourly_calls = CSV.File("../test/austin-data/Full_WeekdayCalls.csv") |> DataFram
 adjacent_nbhd = CSV.File("../test/austin-data/adjacent_nbhd.csv") |> DataFrame
 coverage = CSV.read("../test/austin-data/coverage_real.csv", DataFrame, header=false)
 coverage = convert(Array{Bool, 2}, coverage[:, :])
-incidents = CSV.File("../test/austin-data/austin_incidents.csv") |> DataFrame
+#incidents = CSV.File("../test/austin-data/austin_incidents.csv") |> DataFrame
 solverstats = JLD.load("../src/outputs/austin_team_stats_1_03.jld")
 
 amb_deployment = solverstats["amb_deployment"]
