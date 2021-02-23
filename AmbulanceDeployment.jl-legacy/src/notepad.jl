@@ -1,4 +1,4 @@
-#using AmbulanceDeployment
+using AmbulanceDeployment
 using DataFrames, Winston, JLD, CSV, Gurobi, JuMP
 
 #HOW DATAFRAMES WORK
@@ -67,26 +67,14 @@ amb_deployment = Dict{Symbol, Dict{Int, Vector{Int}}}()
 
 #This creates a symbol, which seems to be a fancy string.
 # #https://stackoverflow.com/questions/23480722/what-is-a-symbol-in-julia
-# (deployment_model, name) = (next_dp -> StochasticDeployment(next_dp, nperiods=500), :Stochastic)
-#
-# model = StochasticDeployment(p, nperiods=500)
-# set_optimizer(model.m, Gurobi.Optimizer)
-# @time optimize!(model, p)
-# amb_deployment[name][namb] = deployment(model)
+(deployment_model, name) = (next_dp -> StochasticDeployment(next_dp, nperiods=500), :Stochastic)
+amb_deployment[name] = Dict{Int, Vector{Int}}()
+
+model = StochasticDeployment(p, nperiods=500)
+set_optimizer(model.m, Gurobi.Optimizer)
+@time optimize!(model, p)
+amb_deployment[name][namb] = deployment(model)
 
 JLD.jldopen("team_stats.jld", "w") do file
     write(file, "amb_deployment", amb_deployment)
-end
-
-#check feasibility
-I = 1:p.nlocations
-J = 1:p.nregions
-for j in J
-    count = 0;
-    for i in filter(i->p.coverage[j,i], I)
-        count = count + 1;
-    end
-    if(count == 0)
-        print(count)
-    end
 end
