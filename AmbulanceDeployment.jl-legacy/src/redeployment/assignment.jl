@@ -5,8 +5,8 @@ generates the assignment model / assigns ambulances based on a queueing system
 currently operates on gurobi 0.8.1
 =#
 struct AssignmentModel <: RedeployModel
-    model::Gurobi.Model
-    #model::JuMP.Model
+    # model::Gurobi.Model
+    model::JuMP.Model
     lambda::Float64
 
     hosp2stn::Matrix{Float64}
@@ -56,40 +56,45 @@ function AssignmentModel(
     fromtime = zeros(Int, nambulances)
     hospital = zeros(Int, nambulances)
 
-    m = Gurobi.Model(Gurobi.Env(), "redeploy", :minimize)
-    Gurobi.setparam!(m, "OutputFlag", 0)
-    for a in 1:nambulances, i in 1:nlocations # w variables
-        Gurobi.add_bvar!(m, 0.)
-    end
-    for i in 1:nlocations # eta1
-        Gurobi.add_cvar!(m, 0., -Inf, Inf)
-    end
-    for a in 1:nambulances, i in 1:nlocations # eta2 variables
-        Gurobi.add_cvar!(m, lambda, 0., Inf)
-    end
-    for i in 1:nlocations # eta3 := eta1^2
-        Gurobi.add_cvar!(m, 1., 0., Inf)
-    end
+    #m = Gurobi.Model(Gurobi.Env(), "redeploy", :minimize)
+    m = Model(GLPK.Optimizer)
+
+
+    # inquire what is the purpose of the w variable for simulation
+    # guess - since its a binary variable of ambulances and locations, a 1 means youre sending a specific amb to a specific location
+    # its a weight. weight 1 of amb 1 plus weight 2 of amb 2 plus weight 3 of amb 3 = 1
+    # inquire what specifically is lambda, and what is the difference between 0 and 100
+    #Gurobi.setparam!(m, "OutputFlag", 0)
+    @variable(m, w[1:nambulances, 1:nlocations], Bin) # w variable
+
+    @variable(m, eta1[1:nlocations], lower_bound = -Inf, upper_bound = Inf)# eta1
+    @variable(m, eta2[1:nambulances, 1:nlocations], lower_bound = 0, upper_bound = Inf) # eta2
+    @variable(m, eta3[1:nlocations], lower_bound = 0., upper_bound = Inf)# eta3 := eta1^2
+
 
     # η₁[i] >= available[i] - sum(w[a,i] for a in 1:nambulances)
     #     reformulated to
     # sum(w[a,i] for a in 1:nambulances) + η₁[i] >= available[i]
+    # for i in 1:nlocations
+    #         Gurobi.add_constr!(m,[((1:nambulances).-1)*nlocations.+i; nambulances*nlocations + i], ones(nambulances + 1), '>', Float64(available[i]))
+    #        end
     for i in 1:nlocations
-            Gurobi.add_constr!(m,
-                   [((1:nambulances).-1)*nlocations.+i; nambulances*nlocations + i], # inds
-                   ones(nambulances + 1), # coeffs
-                   '>', Float64(available[i]))
-           end
+        @constraint(m, sum(w[a,i] for a in 1:nambulances) + 1 >= x[i])
+    end
 
     ## repaired with dot syntax
 
     # sum(w[a,i] for i in 1:nlocations) == 1       [a=1:nambulances]
+    # for a in 1:nambulances
+    #     Gurobi.add_constr!(m,
+    #         collect((a-1)*nlocations .+ (1:nlocations)), # inds
+    #         ones(nlocations), # coeffs
+    #         '=', 1.)
+    # end
+
     for a in 1:nambulances
-        Gurobi.add_constr!(m,
-            collect((a-1)*nlocations .+ (1:nlocations)), # inds
-            ones(nlocations), # coeffs
-            '=', 1.)
-    end
+           @constraint(m, sum(w[a,i] for i in nlocations) == 1)
+       end
 
     # eta2[a,i] >= |w[a,i] - (assignment[a] == i)|   [a=1:nambulances, i=1:nlocations]
     #     reformulated to
@@ -98,6 +103,7 @@ function AssignmentModel(
     for a in 1:nambulances, i in 1:nlocations
         offset = (a-1)*nlocations + i
         inds = [(nambulances+1)*nlocations + offset, offset]
+        # add_constr(model, left hand side of equation, separator, right hand side of equation)
         Gurobi.add_constr!(m, inds, [1., -1.], '>', - Float64(assignment[a] == i))
         Gurobi.add_constr!(m, inds, [1., 1.], '>', Float64(assignment[a] == i))
     end
